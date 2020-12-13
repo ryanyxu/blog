@@ -1,4 +1,5 @@
 .DraftEditor-root {
   font-family: Times, serif;
   font-size: 50px;
+  border: 1px solid black;
 }
