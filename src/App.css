@@ -1,5 +1,18 @@
 .DraftEditor-root {
   font-family: Times, serif;
+  font-size: 20px;
+  
+}
+
+.post {
+  margin: 10vmin 10vmin;
+}
+
+.new-post {
+  margin: 20vmin 20vmin;
+}
+
+.new-post-title {
   font-size: 50px;
-  border: 1px solid black;
+  margin-bottom: 20vmin
 }

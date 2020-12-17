@@ -13,7 +13,8 @@ import {
     Switch,
     Route,
     useParams,
-    withRouter
+    withRouter,
+    Link
   } from "react-router-dom";
 
 import 'draft-js/dist/Draft.css';
@@ -21,25 +22,47 @@ import './App.css'
 
 import firebase from 'firebase';
 
+import { IconButton, Grid, Divider} from '@material-ui/core';
+import AddIcon from '@material-ui/icons/Add';
+import NewPost from './NewPost';
+
+
 const App = () => {
   return (
     <Router>
       <Switch>
+        <Route path="/:id/new" children={<NewPost/>}/>
         <Route path="/:id" children={<Blog/>} />
       </Switch>
     </Router>
   );
 }
+const Blog = () => {
+  const emptyPost = "{\"blocks\":[{\"key\":\"aoe6u\",\"text\":\"\",\"type\":\"unstyled\",\"depth\":0,\"inlineStyleRanges\":[],\"entityRanges\":[],\"data\":{}}],\"entityMap\":{}}"
+  const {id} = useParams()
 
-class Blog extends React.Component {
+  return <div>
+    <Posts id={id} />
+    <Link to={'/' + id + '/new'}>
+      <Grid container justify = "center">
+        <IconButton aria-label="new post" >
+          <AddIcon />
+        </IconButton>
+      </Grid>
+    </Link>
+  </div>
+}
+
+
+class Posts extends React.Component {
   constructor(props) {
     super(props);
-    //this.addItem = this.addItem.bind(this);
-    //const {id}= useParams()
-    var id = 'ryan'
-    this.state = {posts: [], id: id}
-    firebase.database().ref("user").child(id).on('child_added', (snapshot) => {
-      this.setState({posts: [...this.state.posts, {postId: snapshot.key, content: EditorState.createWithContent(convertFromRaw(JSON.parse(snapshot.val().content)))}]})
+    this.state = {posts: []}
+    firebase.database().ref("user").child(this.props.id).on('child_added', (snapshot) => {
+      this.setState({posts: [...this.state.posts, 
+        { postId: snapshot.key,
+          title: EditorState.createWithContent(convertFromRaw(JSON.parse(snapshot.val().title))),
+          content: EditorState.createWithContent(convertFromRaw(JSON.parse(snapshot.val().content)))}]})
     })
     /* not needed yet
     database.ref('items').on('child_removed', (data) => {
@@ -68,12 +91,22 @@ class Blog extends React.Component {
 
 
   render() {
-    return <>{this.state.posts.map((post) => <Post id={this.state.id} post = {post}/>)}</>
+    return <>
+      <h2>{this.props.id}'s journal</h2>
+      {this.state.posts.map((post) =>
+      <Post
+        id={this.props.id}
+        post = {post}/>)}
+        </>
   }
 }
 
 
 const Post = (props) => {
+  const [titleEditorState, setTitleEditorState] = React.useState(
+    () => props.post.title
+  );
+
   const [editorState, setEditorState] = React.useState(
     () => props.post.content
   );
@@ -94,20 +127,35 @@ const Post = (props) => {
   const keyBinding = (e) => {
     if (e.keyCode === 75 /* `S` key */ && hasCommandModifier(e)) {
       var postId = props.post.postId
-      firebase.database().ref("user").child(props.id).set({[postId]: {
+      firebase.database().ref("user").child(props.id).child(postId).set({
           date: Date.now().toString(),
+          title: JSON.stringify(convertToRaw(titleEditorState.getCurrentContent())),
           content: JSON.stringify(convertToRaw(editorState.getCurrentContent()))
-        }})
+        })
     }
     return getDefaultKeyBinding(e);
   }
 
-  return <Editor
-    editorState={editorState}
-    onChange={setEditorState} 
-    handleKeyCommand={handleKeyCommand}
-    keyBindingFn={keyBinding}
-  />;
+  return <>
+    <div className='post'>
+      <Editor
+        editorState={titleEditorState}
+        onChange={setTitleEditorState} 
+        handleKeyCommand={handleKeyCommand}
+        readOnly={true}
+        placeholder='Title'
+      />
+      <Editor
+        editorState={editorState}
+        onChange={setEditorState} 
+        handleKeyCommand={handleKeyCommand}
+        keyBindingFn={keyBinding}
+        readOnly={true}
+        placeholder="people don't realize that ravens are actually purple..."
+      />
+    </div>
+    <Divider variant='middle' />
+  </>
 }
 
 export default App
