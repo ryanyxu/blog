@@ -1,7 +1,5 @@
-.DraftEditor-root {
+#root {
   font-family: Times, serif;
-  font-size: 20px;
-  
 }
 
 .post {
@@ -15,4 +13,39 @@
 .new-post-title {
   font-size: 50px;
   margin-bottom: 20vmin
+}
+
+.empty-notepad {
+  margin: 20vmin 30vmin
+}
+
+.empty-notepad-title {
+  margin-bottom: 5vmin;
+  font-size: 45px;
+}
+
+.empty-notepad-content {
+  margin-top: 5vmin;
+  font-size: 30px;
+}
+
+.heading {
+  margin-right: 10vmin;
+  margin-bottom: 5vmin;
+  font-size: 60px;
+}
+
+.home {
+  padding-top: 20vh;
+  font-size: 30px;
+}
+
+html {
+  overflow: scroll;
+  overflow-x: hidden;
+}
+
+::-webkit-scrollbar {
+  width: 0px;
+  background: transparent;
 }
