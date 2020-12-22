@@ -3,8 +3,6 @@ import ReactDOM from 'react-dom';
 import './index.css';
 import App from './App';
 import firebase from 'firebase'
-import EmptyNotepad from './EmptyNotepad'
-
 const config = {
   apiKey: "AIzaSyBeezw-yyxDhs1jurdGo-fCfgywb50Wdjo",
   authDomain: "rxublog.firebaseapp.com",
@@ -19,7 +17,7 @@ firebase.initializeApp(config)
 
 ReactDOM.render(
   <React.StrictMode>
-    <EmptyNotepad />
+    <App/>
   </React.StrictMode>,
   document.getElementById('root')
 );

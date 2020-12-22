@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Editor,
   EditorState,
@@ -6,156 +6,268 @@ import {
   getDefaultKeyBinding,
   KeyBindingUtil,
   convertFromRaw,
-  convertToRaw} from 'draft-js';
+  convertToRaw,
+  Modifier,
+} from "draft-js";
 
 import {
-    BrowserRouter as Router,
-    Switch,
-    Route,
-    useParams,
-    withRouter,
-    Link
-  } from "react-router-dom";
+  BrowserRouter as Router,
+  Switch,
+  Route,
+  useParams,
+  withRouter,
+  Link,
+} from "react-router-dom";
 
-import 'draft-js/dist/Draft.css';
-import './App.css'
+import "draft-js/dist/Draft.css";
+import "./App.css";
 
-import firebase from 'firebase';
+import firebase from "firebase";
 
-import { IconButton, Grid, Divider} from '@material-ui/core';
-import AddIcon from '@material-ui/icons/Add';
-import NewPost from './NewPost';
+import {
+  IconButton,
+  Grid,
+  Divider,
+  Button,
+  Box,
+  List,
+  ListItem,
+  ListItemText,
+} from "@material-ui/core";
+import AddIcon from "@material-ui/icons/Add";
 
+const App = () => (
+  <Router>
+    <Switch>
+      <Route path="/:page" children={<Notepad />} />
+      <Route path="/" children={<Home />} />
+    </Switch>
+  </Router>
+);
 
-const App = () => {
-  return (
-    <Router>
-      <Switch>
-        <Route path="/:id/new" children={<NewPost/>}/>
-        <Route path="/:id" children={<Blog/>} />
-      </Switch>
-    </Router>
-  );
-}
-const Blog = () => {
-  const emptyPost = "{\"blocks\":[{\"key\":\"aoe6u\",\"text\":\"\",\"type\":\"unstyled\",\"depth\":0,\"inlineStyleRanges\":[],\"entityRanges\":[],\"data\":{}}],\"entityMap\":{}}"
-  const {id} = useParams()
-
-  return <div>
-    <Posts id={id} />
-    <Link to={'/' + id + '/new'}>
-      <Grid container justify = "center">
-        <IconButton aria-label="new post" >
-          <AddIcon />
-        </IconButton>
-      </Grid>
-    </Link>
-  </div>
-}
-
-
-class Posts extends React.Component {
+class Home extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {posts: []}
-    firebase.database().ref("user").child(this.props.id).on('child_added', (snapshot) => {
-      this.setState({posts: [...this.state.posts, 
-        { postId: snapshot.key,
-          title: EditorState.createWithContent(convertFromRaw(JSON.parse(snapshot.val().title))),
-          content: EditorState.createWithContent(convertFromRaw(JSON.parse(snapshot.val().content)))}]})
-    })
-    /* not needed yet
-    database.ref('items').on('child_removed', (data) => {
-      console.log('removed')
-      for (var i = 0; i < this.state.blogs.length; i++) {
-        if (this.state.blogs[i].key == data.key) {
-          this.state.blogs.splice(i, 1)
-        }
-      }
-      this.setState({})
-    })
-    */
+    this.state = { pages: [] };
+    firebase
+      .database()
+      .ref("page")
+      .orderByChild('created')
+      .on("child_added", (snapshot) => {
+        this.setState({ pages: [...this.state.pages, snapshot.key] });
+      });
   }
-  /*
-  addPost(e) {
-    if (e.key === "Enter") {
-      addItem(e.target.value);
-      e.target.value = "";
-    }
-  }
-
-  deleteItem(itemKey) {
-    removeItem(itemKey);
-  }
-  */
-
 
   render() {
-    return <>
-      <h2>{this.props.id}'s journal</h2>
-      {this.state.posts.map((post) =>
-      <Post
-        id={this.props.id}
-        post = {post}/>)}
-        </>
+    return (
+      <Grid
+        className="home"
+        container
+        direction="row"
+        justify="center"
+        alignItems="center"
+      >
+        <div
+          style={{ marginRight: "10vmin", marginBottom: "3vmin", fontSize: 60 }}
+        >
+          Ryan's notes
+        </div>
+
+        <Divider orientation="vertical" flexItem />
+        <Box
+          style={{
+            maxHeight: "60vh",
+            overflow: "auto",
+            width: "auto",
+            fontSize: 30,
+          }}
+        >
+          {this.state.pages.reverse().map((page) => (
+            <ListItem button component="a" href={"/" + page}>
+              {page}
+            </ListItem>
+          ))}
+        </Box>
+      </Grid>
+    );
   }
 }
 
+const Notepad = () => {
+  const { page } = useParams();
 
-const Post = (props) => {
-  const [titleEditorState, setTitleEditorState] = React.useState(
-    () => props.post.title
+  const getEmpty = () => {
+    let key = page + "T";
+    var test =
+      '{"blocks":[{"key":"' +
+      key +
+      '","text":"' +
+      page +
+      '","type":"unstyled","depth":0,"inlineStyleRanges":[],"entityRanges":[],"data":{}}],"entityMap":{}}';
+    return EditorState.createWithContent(convertFromRaw(JSON.parse(test)));
+  };
+
+  const [titleEditorState, setTitleEditorState] = React.useState(() =>
+    getEmpty()
   );
 
-  const [editorState, setEditorState] = React.useState(
-    () => props.post.content
+  const [editorState, setEditorState] = React.useState(() =>
+    EditorState.createEmpty()
   );
 
-  const handleKeyCommand = (command, editorState) => {
+  const [createdState, setCreatedState] = React.useState(() => '');
+  const [newState, setNewState] = React.useState(false)
+
+  useEffect(() => {
+    firebase
+      .database()
+      .ref("page")
+      .child(page)
+      .on("value", (snapshot) => {
+        if (snapshot.val()) {
+          let title = EditorState.createWithContent(
+            convertFromRaw(JSON.parse(snapshot.val().title))
+          );
+          let editor = EditorState.createWithContent(
+            convertFromRaw(JSON.parse(snapshot.val().content))
+          );
+          setTitleEditorState(title);
+          setEditorState(editor);
+          setCreatedState(snapshot.val().created)
+        } else {
+          setCreatedState(Date.now().toString())
+          setNewState(true)
+        }
+      });
+  }, []);
+
+  const save = () => {
+    if (newState) {
+      firebase.database().ref("page").child(page).set({
+        created: createdState,
+        edited: Date.now().toString(),
+        title: JSON.stringify(
+          convertToRaw(titleEditorState.getCurrentContent())
+        ),
+        content: JSON.stringify(convertToRaw(editorState.getCurrentContent())),
+      });
+    } else {
+      firebase.database().ref("page").child(page).update({
+        edited: Date.now().toString(),
+        title: JSON.stringify(
+          convertToRaw(titleEditorState.getCurrentContent())
+        ),
+        content: JSON.stringify(convertToRaw(editorState.getCurrentContent())),
+      });
+    }
+    
+  };
+
+  const onTab = (e) => {
+    e.preventDefault();
+    let currentState = editorState;
+
+    const selection = currentState.getSelection();
+    const blockType = currentState
+      .getCurrentContent()
+      .getBlockForKey(selection.getStartKey())
+      .getType();
+
+    if (
+      blockType === "unordered-list-item" ||
+      blockType === "ordered-list-item"
+    ) {
+      setEditorState(RichUtils.onTab(e, currentState, 3));
+    } else {
+      let newContentState = Modifier.replaceText(
+        currentState.getCurrentContent(),
+        currentState.getSelection(),
+        "        "
+      );
+
+      setEditorState(
+        EditorState.push(currentState, newContentState, "insert-characters")
+      );
+    }
+  };
+
+  const handleKeyCommand = (command, editorState, b) => {
     const newState = RichUtils.handleKeyCommand(editorState, command);
 
+
     if (newState) {
-      setEditorState(newState);
-      return 'handled';
+      if (b) {
+        setTitleEditorState(newState);
+      } else {
+        setEditorState(newState);
+      }
+      return "handled";
     }
 
-    return 'not-handled';
-  }
+    return "not-handled";
+  };
+  
 
-  const {hasCommandModifier} = KeyBindingUtil
+  const { hasCommandModifier } = KeyBindingUtil;
 
   const keyBinding = (e) => {
-    if (e.keyCode === 75 /* `S` key */ && hasCommandModifier(e)) {
-      var postId = props.post.postId
-      firebase.database().ref("user").child(props.id).child(postId).set({
-          date: Date.now().toString(),
-          title: JSON.stringify(convertToRaw(titleEditorState.getCurrentContent())),
-          content: JSON.stringify(convertToRaw(editorState.getCurrentContent()))
-        })
+    if (e.keyCode === 83 /* `S` key */ && hasCommandModifier(e)) {
+      e.preventDefault();
+      save();
+      return 'save'
     }
+    /*
+    console.log(e.keyCode)
+    if (e.keyCode === 32) {
+      var selectionState = editorState.getSelection();
+      var anchorKey = selectionState.getAnchorKey();
+      var currentContent = editorState.getCurrentContent();
+      var currentContentBlock = currentContent.getBlockForKey(anchorKey);
+      var text = currentContentBlock.getText()
+      if (text.length === 1 && text[0] === '-') {
+        console.log('i am here')
+        var newState = RichUtils.toggleBlockType(
+          editorState,
+          'unordered-list-item'
+        )
+        setEditorState(newState)
+        return 'list'
+      }
+    }
+    */
+
     return getDefaultKeyBinding(e);
-  }
+  };
 
-  return <>
-    <div className='post'>
-      <Editor
-        editorState={titleEditorState}
-        onChange={setTitleEditorState} 
-        handleKeyCommand={handleKeyCommand}
-        readOnly={true}
-        placeholder='Title'
-      />
-      <Editor
-        editorState={editorState}
-        onChange={setEditorState} 
-        handleKeyCommand={handleKeyCommand}
-        keyBindingFn={keyBinding}
-        readOnly={true}
-        placeholder="people don't realize that ravens are actually purple..."
-      />
+  return (
+    <div style={{margin: "20vmin 30vmin"}}>
+      <div style={{fontSize:25}}>{(new Date(createdState)).toLocaleDateString()}</div>
+      <div style={{marginTop: '1vmin',marginBottom: '5vmin', fontSize:45}}>
+        <Editor
+          editorState={titleEditorState}
+          onChange={setTitleEditorState}
+          handleKeyCommand={(c, e) => handleKeyCommand(c, e, true)}
+          keyBindingFn={keyBinding}
+          readOnly={false}
+          placeholder="title"
+        />
+      </div>
+
+      <Divider variant="middle" />
+
+      <div style={{marginTop: '5vmin', fontSize:30}}>
+        <Editor
+          editorState={editorState}
+          onChange={setEditorState}
+          handleKeyCommand={(c, e) => handleKeyCommand(c, e, false)}
+          keyBindingFn={keyBinding}
+          readOnly={false}
+          placeholder="my thoughts..."
+          onTab={onTab}
+        />
+      </div>
     </div>
-    <Divider variant='middle' />
-  </>
-}
+  );
+};
 
-export default App
+export default App;
