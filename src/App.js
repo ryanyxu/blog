@@ -34,7 +34,7 @@ import {
   ListItem,
   ListItemText,
 } from "@material-ui/core";
-import AddIcon from "@material-ui/icons/Add";
+import ArrowBackRoundedIcon from "@material-ui/icons/ArrowBackRounded";
 
 const App = () => (
   <Router>
@@ -52,7 +52,7 @@ class Home extends React.Component {
     firebase
       .database()
       .ref("page")
-      .orderByChild('created')
+      .orderByChild("created")
       .on("child_added", (snapshot) => {
         this.setState({ pages: [...this.state.pages, snapshot.key] });
       });
@@ -115,8 +115,8 @@ const Notepad = () => {
     EditorState.createEmpty()
   );
 
-  const [createdState, setCreatedState] = React.useState(() => '');
-  const [newState, setNewState] = React.useState(false)
+  const [createdState, setCreatedState] = React.useState(() => "");
+  const [newState, setNewState] = React.useState(false);
 
   useEffect(() => {
     firebase
@@ -133,34 +133,45 @@ const Notepad = () => {
           );
           setTitleEditorState(title);
           setEditorState(editor);
-          setCreatedState(snapshot.val().created)
+          setCreatedState(snapshot.val().created);
         } else {
-          setCreatedState(Date.now().toString())
-          setNewState(true)
+          setCreatedState(Date.now().toString());
+          setNewState(true);
         }
       });
   }, []);
 
   const save = () => {
     if (newState) {
-      firebase.database().ref("page").child(page).set({
-        created: createdState,
-        edited: Date.now().toString(),
-        title: JSON.stringify(
-          convertToRaw(titleEditorState.getCurrentContent())
-        ),
-        content: JSON.stringify(convertToRaw(editorState.getCurrentContent())),
-      });
+      firebase
+        .database()
+        .ref("page")
+        .child(page)
+        .set({
+          created: createdState,
+          edited: Date.now().toString(),
+          title: JSON.stringify(
+            convertToRaw(titleEditorState.getCurrentContent())
+          ),
+          content: JSON.stringify(
+            convertToRaw(editorState.getCurrentContent())
+          ),
+        });
     } else {
-      firebase.database().ref("page").child(page).update({
-        edited: Date.now().toString(),
-        title: JSON.stringify(
-          convertToRaw(titleEditorState.getCurrentContent())
-        ),
-        content: JSON.stringify(convertToRaw(editorState.getCurrentContent())),
-      });
+      firebase
+        .database()
+        .ref("page")
+        .child(page)
+        .update({
+          edited: Date.now().toString(),
+          title: JSON.stringify(
+            convertToRaw(titleEditorState.getCurrentContent())
+          ),
+          content: JSON.stringify(
+            convertToRaw(editorState.getCurrentContent())
+          ),
+        });
     }
-    
   };
 
   const onTab = (e) => {
@@ -194,7 +205,6 @@ const Notepad = () => {
   const handleKeyCommand = (command, editorState, b) => {
     const newState = RichUtils.handleKeyCommand(editorState, command);
 
-
     if (newState) {
       if (b) {
         setTitleEditorState(newState);
@@ -206,7 +216,6 @@ const Notepad = () => {
 
     return "not-handled";
   };
-  
 
   const { hasCommandModifier } = KeyBindingUtil;
 
@@ -214,7 +223,7 @@ const Notepad = () => {
     if (e.keyCode === 83 /* `S` key */ && hasCommandModifier(e)) {
       e.preventDefault();
       save();
-      return 'save'
+      return "save";
     }
     /*
     console.log(e.keyCode)
@@ -237,37 +246,110 @@ const Notepad = () => {
     */
 
     return getDefaultKeyBinding(e);
-  };
-
+  }
   return (
-    <div style={{margin: "20vmin 30vmin"}}>
-      <div style={{fontSize:25}}>{(new Date(createdState)).toLocaleDateString()}</div>
-      <div style={{marginTop: '1vmin',marginBottom: '5vmin', fontSize:45}}>
-        <Editor
-          editorState={titleEditorState}
-          onChange={setTitleEditorState}
-          handleKeyCommand={(c, e) => handleKeyCommand(c, e, true)}
-          keyBindingFn={keyBinding}
-          readOnly={false}
-          placeholder="title"
-        />
-      </div>
+    <div>
+      <Box style={{background: 'transparent', height:'0vh'} /* set body margin to -5 if needed */}>
+        <IconButton
+            aria-label="home"
+            href="/"
+            style={{ margin: "4vmin 0 0 4vmin" }}
+          >
+            <ArrowBackRoundedIcon fontSize="large" />
+          </IconButton>
+        </Box>
+      <Box
+        style={{
+          padding: '20vmin 30vmin',//"12vmin 30vmin",
+          maxHeight: '90vh',
+          overflow: 'auto',
+        }}
+      >
+        <div
+          style={{ marginTop: "1vmin", marginBottom: "5vmin", fontSize: 45 }}
+        >
+          <Editor
+            editorState={titleEditorState}
+            onChange={setTitleEditorState}
+            handleKeyCommand={(c, e) => handleKeyCommand(c, e, true)}
+            keyBindingFn={keyBinding}
+            readOnly={false}
+            placeholder="title"
+          />
+        </div>
 
-      <Divider variant="middle" />
+        <Divider variant="middle" />
 
-      <div style={{marginTop: '5vmin', fontSize:30}}>
-        <Editor
-          editorState={editorState}
-          onChange={setEditorState}
-          handleKeyCommand={(c, e) => handleKeyCommand(c, e, false)}
-          keyBindingFn={keyBinding}
-          readOnly={false}
-          placeholder="my thoughts..."
-          onTab={onTab}
-        />
-      </div>
+        <div style={{ marginTop: "5vmin", fontSize: 30 }}>
+          <Editor
+            editorState={editorState}
+            onChange={setEditorState}
+            handleKeyCommand={(c, e) => handleKeyCommand(c, e, false)}
+            keyBindingFn={keyBinding}
+            readOnly={false}
+            placeholder="my thoughts..."
+            onTab={onTab}
+          />
+        </div>
+      </Box>
     </div>
   );
+
+  /*
+
+  <div style={{ fontSize: 25 }}>
+    {new Date(createdState).toLocaleDateString()}
+  </div>
+  */
+  /*
+  return (
+    <div>
+      <div style={{ maxHeight: "10vh" }}>
+        <IconButton
+          aria-label="home"
+          href="/"
+          style={{ margin: "4vmin 0 0 4vmin" }}
+        >
+          <ArrowBackRoundedIcon fontSize="large" />
+        </IconButton>
+      </div>
+      <Box
+        style={{
+          margin: "12vmin 30vmin",
+          maxHeight: "90vh",
+          overflow: "auto",
+        }}
+      >
+        <div
+          style={{ marginTop: "1vmin", marginBottom: "5vmin", fontSize: 45 }}
+        >
+          <Editor
+            editorState={titleEditorState}
+            onChange={setTitleEditorState}
+            handleKeyCommand={(c, e) => handleKeyCommand(c, e, true)}
+            keyBindingFn={keyBinding}
+            readOnly={false}
+            placeholder="title"
+          />
+        </div>
+
+        <Divider variant="middle" />
+
+        <div style={{ marginTop: "5vmin", fontSize: 30 }}>
+          <Editor
+            editorState={editorState}
+            onChange={setEditorState}
+            handleKeyCommand={(c, e) => handleKeyCommand(c, e, false)}
+            keyBindingFn={keyBinding}
+            readOnly={false}
+            placeholder="my thoughts..."
+            onTab={onTab}
+          />
+        </div>
+      </Box>
+    </div>
+  );
+  */
 };
 
 export default App;
