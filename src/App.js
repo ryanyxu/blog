@@ -35,6 +35,8 @@ import {
   ListItemText,
 } from "@material-ui/core";
 import ArrowBackRoundedIcon from "@material-ui/icons/ArrowBackRounded";
+import CloudQueueRoundedIcon from '@material-ui/icons/CloudQueueRounded';
+import CloudDoneRoundedIcon from '@material-ui/icons/CloudDoneRounded';
 
 const App = () => (
   <Router>
@@ -86,7 +88,7 @@ class Home extends React.Component {
             <ListItem button component="a" href={"/" + page}>
               {page}
             </ListItem>
-          ))}
+          )).reverse()}
         </Box>
       </Grid>
     );
@@ -117,6 +119,7 @@ const Notepad = () => {
 
   const [createdState, setCreatedState] = React.useState(() => "");
   const [newState, setNewState] = React.useState(false);
+  const [saved, setSaved] = React.useState(false)
 
   useEffect(() => {
     firebase
@@ -139,6 +142,11 @@ const Notepad = () => {
           setNewState(true);
         }
       });
+      const interval = setInterval(() => {
+        save()
+      }, 60000 );
+    
+      return () => clearInterval(interval); 
   }, []);
 
   const save = () => {
@@ -172,6 +180,7 @@ const Notepad = () => {
           ),
         });
     }
+    setSaved(true)
   };
 
   const onTab = (e) => {
@@ -220,6 +229,7 @@ const Notepad = () => {
   const { hasCommandModifier } = KeyBindingUtil;
 
   const keyBinding = (e) => {
+    setSaved(false)
     if (e.keyCode === 83 /* `S` key */ && hasCommandModifier(e)) {
       e.preventDefault();
       save();
@@ -249,7 +259,13 @@ const Notepad = () => {
   }
   return (
     <div>
-      <Box style={{background: 'transparent', height:'0vh'} /* set body margin to -5 if needed */}>
+      <Grid
+      style={{background: 'transparent', height:'0vh'}}
+      container
+      direction="row"
+      justify="space-between"
+      alignItems="flex-start"
+    >
         <IconButton
             aria-label="home"
             href="/"
@@ -257,7 +273,15 @@ const Notepad = () => {
           >
             <ArrowBackRoundedIcon fontSize="large" />
           </IconButton>
-        </Box>
+          <IconButton
+            aria-label="home"
+            href="/"
+            style={{ margin: "4vmin 4vmin 0 0" }}
+          >
+          {saved ? 
+            <CloudDoneRoundedIcon fontSize="large" /> : <CloudQueueRoundedIcon fontSize="large" />}
+          </IconButton>
+        </Grid>
       <Box
         style={{
           padding: '20vmin 30vmin',//"12vmin 30vmin",
