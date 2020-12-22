@@ -82,7 +82,7 @@ class Home extends React.Component {
             fontSize: 30,
           }}
         >
-          {this.state.pages.reverse().map((page) => (
+          {this.state.pages.map((page) => (
             <ListItem button component="a" href={"/" + page}>
               {page}
             </ListItem>
@@ -261,7 +261,7 @@ const Notepad = () => {
       <Box
         style={{
           padding: '20vmin 30vmin',//"12vmin 30vmin",
-          maxHeight: '90vh',
+          maxHeight: '60vh',
           overflow: 'auto',
         }}
       >
